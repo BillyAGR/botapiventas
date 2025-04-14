@@ -24,8 +24,6 @@ class MessageHandler {
       } else if (this.assistandState[message.from]) {
         await this.handleAssistanFlow(message.from, incomingMessage);
       } else {
-        // const response = `Echo: ${message.text.body}`;
-        // await whatsappService.sendMessage(message.from, response, message.id);
         await this.handleMenuOption(message.from, incomingMessage);
       }
       await whatsappService.markAsRead(message.id);
