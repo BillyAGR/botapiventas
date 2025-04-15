@@ -1,6 +1,6 @@
 import whatsappService from './whatsappService.js';
 import appendToSheet from './googleSheetsService.js';
-import openAIService from './openAiservice.js';
+import openAIService from './openAIservice.js';
 import geminiService from './geminiService.js';
 
 class MessageHandler {
