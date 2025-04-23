@@ -38,50 +38,6 @@ class MessageHandler {
     if (handlers[type]) await handlers[type]();
   }
 
-
-  async handleIncomingMessage(message, senderInfo) {
-    if (!message) {
-      return; // Evitar errores si el mensaje es nulo o undefined
-    }
-
-    const messageType = message?.type;
-    const messageFrom = message?.from;
-    const messageId = message?.id;
-
-    await whatsappService.markAsRead(messageId); // Marcar como leído al principio
-
-    switch (messageType) {
-      case 'text':
-        const incomingMessage = message.text.body.toLowerCase().trim();
-        const mediaFileTypes = ['audio', 'video', 'imagen', 'documento'];
-
-        if (this.isGreeting(incomingMessage)) {
-          await this.sendWelcomeMessage(messageFrom, messageId, senderInfo);
-          await this.sendWelcomeMenu(messageFrom);
-        } else if (mediaFileTypes.includes(incomingMessage)) {
-          await this.sendMedia(messageFrom, incomingMessage);
-        } else if (this.appointmentState[messageFrom]) {
-          await this.handleAppointmentFlow(messageFrom, incomingMessage);
-        } else if (this.assistandState[messageFrom]) {
-          await this.handleAssistanFlow(messageFrom, incomingMessage);
-        } else {
-          await this.handleMenuOption(messageFrom, incomingMessage);
-        }
-        break;
-
-      case 'interactive':
-        const option = message?.interactive?.button_reply?.title?.toLowerCase()?.trim();
-        if (option) {
-          await this.handleMenuOption(messageFrom, option);
-        }
-        break;
-
-      default:
-        // Manejar otros tipos de mensajes si es necesario
-        console.log(`Tipo de mensaje no manejado: ${messageType}`);
-    }
-  }
-
   isGreeting(message) {
     const greetings = ['hola', 'hello', 'hi', 'Bienvenido'];
     return greetings.includes(message);
