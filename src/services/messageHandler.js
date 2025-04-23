@@ -10,27 +10,79 @@ class MessageHandler {
   }
 
   async handleIncomingMessage(message, senderInfo) {
-    if (message?.type === 'text') {
+    if (!message) return;
+    
+    const {
+      type,
+      from,
+      id 
+    } = message; 
+
+    if (type === 'text') {
       const incomingMessage = message.text.body.toLowerCase().trim();
       const mediaFile = ['audio', 'video', 'imagen', 'documento']
 
       if (this.isGreeting(incomingMessage)) {
-        await this.sendWelcomeMessage(message.from, message.id, senderInfo)
-        await this.sendWelcomeMenu(message.from);
+        await this.sendWelcomeMessage(from, id, senderInfo)
+        await this.sendWelcomeMenu(from);
       } else if (mediaFile.includes(incomingMessage)) {
-        await this.sendMedia(message.from, incomingMessage);
-      } else if (this.appointmentState[message.from]) {
-        await this.handleAppointmentFlow(message.from, incomingMessage);
-      } else if (this.assistandState[message.from]) {
-        await this.handleAssistanFlow(message.from, incomingMessage);
+        await this.sendMedia(from, incomingMessage);
+      } else if (this.appointmentState[from]) {
+        await this.handleAppointmentFlow(from, incomingMessage);
+      } else if (this.assistandState[from]) {
+        await this.handleAssistanFlow(from, incomingMessage);
       } else {
-        await this.handleMenuOption(message.from, incomingMessage);
+        await this.handleMenuOption(from, incomingMessage);
       }
-      await whatsappService.markAsRead(message.id);
-    } else if (message?.type === 'interactive') {
+      await whatsappService.markAsRead(id);
+    } else if (type === 'interactive') {
       const option = message?.interactive?.button_reply?.title.toLowerCase().trim();
-      await this.handleMenuOption(message.from, option);
-      await whatsappService.markAsRead(message.id);
+      await this.handleMenuOption(from, option);
+      await whatsappService.markAsRead(id);
+    }
+  }
+
+
+  async handleIncomingMessage(message, senderInfo) {
+    if (!message) {
+      return; // Evitar errores si el mensaje es nulo o undefined
+    }
+
+    const messageType = message?.type;
+    const messageFrom = message?.from;
+    const messageId = message?.id;
+
+    await whatsappService.markAsRead(messageId); // Marcar como leído al principio
+
+    switch (messageType) {
+      case 'text':
+        const incomingMessage = message.text.body.toLowerCase().trim();
+        const mediaFileTypes = ['audio', 'video', 'imagen', 'documento'];
+
+        if (this.isGreeting(incomingMessage)) {
+          await this.sendWelcomeMessage(messageFrom, messageId, senderInfo);
+          await this.sendWelcomeMenu(messageFrom);
+        } else if (mediaFileTypes.includes(incomingMessage)) {
+          await this.sendMedia(messageFrom, incomingMessage);
+        } else if (this.appointmentState[messageFrom]) {
+          await this.handleAppointmentFlow(messageFrom, incomingMessage);
+        } else if (this.assistandState[messageFrom]) {
+          await this.handleAssistanFlow(messageFrom, incomingMessage);
+        } else {
+          await this.handleMenuOption(messageFrom, incomingMessage);
+        }
+        break;
+
+      case 'interactive':
+        const option = message?.interactive?.button_reply?.title?.toLowerCase()?.trim();
+        if (option) {
+          await this.handleMenuOption(messageFrom, option);
+        }
+        break;
+
+      default:
+        // Manejar otros tipos de mensajes si es necesario
+        console.log(`Tipo de mensaje no manejado: ${messageType}`);
     }
   }
 
@@ -97,7 +149,7 @@ Por favor, elige una de las siguientes opciones:`;
         await this.sendContact(to);
         return 'Te enviamos la información de nuestro contacto. 😊';
       },
-      ubicacion: async() => {
+      ubicacion: async () => {
         await this.sendLocation(to);
         return '📍 *Nuestra ubicación:*. ¡Te esperamos! 😊';
       }
@@ -288,11 +340,11 @@ Por favor, elige una de las siguientes opciones:`;
 
   async sendLocation(to) {
     const location = {
-      latitude: 6.20716,  
+      latitude: 6.20716,
       longitude: -75.574607,
       name: 'SAO',
       address: 'Cl. 6 Sur #43a 96 Of 405, El Poblado, Medellín, El Poblado, Medellín, Antioquia'
-    } 
+    }
 
     await whatsappService.sendLocationMessage(to, location);
   }
