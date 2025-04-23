@@ -11,35 +11,31 @@ class MessageHandler {
 
   async handleIncomingMessage(message, senderInfo) {
     if (!message) return;
-    
-    const {
-      type,
-      from,
-      id 
-    } = message; 
-
-    if (type === 'text') {
-      const incomingMessage = message.text.body.toLowerCase().trim();
-      const mediaFile = ['audio', 'video', 'imagen', 'documento']
-
-      if (this.isGreeting(incomingMessage)) {
-        await this.sendWelcomeMessage(from, id, senderInfo)
-        await this.sendWelcomeMenu(from);
-      } else if (mediaFile.includes(incomingMessage)) {
-        await this.sendMedia(from, incomingMessage);
-      } else if (this.appointmentState[from]) {
-        await this.handleAppointmentFlow(from, incomingMessage);
-      } else if (this.assistandState[from]) {
-        await this.handleAssistanFlow(from, incomingMessage);
-      } else {
-        await this.handleMenuOption(from, incomingMessage);
+  
+    const { type, from, id } = message;
+    const body = message?.text?.body?.toLowerCase()?.trim();
+    const option = message?.interactive?.button_reply?.title?.toLowerCase()?.trim();
+    const mediaFile = ['audio', 'video', 'imagen', 'documento'];
+  
+    const handlers = {
+      text: async () => {
+        const action =
+          this.isGreeting(body) ? () => this.sendWelcomeMessage(from, id, senderInfo).then(() => this.sendWelcomeMenu(from)) :
+          mediaFile.includes(body) ? () => this.sendMedia(from, body) :
+          this.appointmentState[from] ? () => this.handleAppointmentFlow(from, body) :
+          this.assistandState[from] ? () => this.handleAssistanFlow(from, body) :
+          () => this.handleMenuOption(from, body);
+  
+        await action();
+        await whatsappService.markAsRead(id);
+      },
+      interactive: async () => {
+        await this.handleMenuOption(from, option);
+        await whatsappService.markAsRead(id);
       }
-      await whatsappService.markAsRead(id);
-    } else if (type === 'interactive') {
-      const option = message?.interactive?.button_reply?.title.toLowerCase().trim();
-      await this.handleMenuOption(from, option);
-      await whatsappService.markAsRead(id);
-    }
+    };
+  
+    if (handlers[type]) await handlers[type]();
   }
 
 
