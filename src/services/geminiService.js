@@ -8,7 +8,7 @@ const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
 const conversationHistory = {};
 
 //Prompt base personalised for the assistant
-const promptBase = promptBase;
+const promptBase = prompItem;
 
 const geminiService = async (userId, message) => {
     try {
