@@ -1,6 +1,6 @@
 import config from '../config/env.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import promptBase from '../prompts/promptItem.js';
+import prompItem from '../prompts/promptItem.js';
 
 const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
 
