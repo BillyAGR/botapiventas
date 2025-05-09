@@ -11,21 +11,23 @@ class MessageHandler {
 
   async handleIncomingMessage(message, senderInfo) {
     if (!message) return;
-  
+
     const { type, from, id } = message;
     const body = message?.text?.body?.toLowerCase()?.trim();
     const option = message?.interactive?.button_reply?.title?.toLowerCase()?.trim();
     const mediaFile = ['audio', 'video', 'imagen', 'documento'];
-  
+
+    // console.log('asistente', this.assistandState[from]);
+
     const handlers = {
       text: async () => {
         const action =
           this.isGreeting(body) ? () => this.sendWelcomeMessage(from, id, senderInfo).then(() => this.sendWelcomeMenu(from)) :
-          mediaFile.includes(body) ? () => this.sendMedia(from, body) :
-          this.appointmentState[from] ? () => this.handleAppointmentFlow(from, body) :
-          this.assistandState[from] ? () => this.handleAssistanFlow(from, body) :
-          () => this.handleMenuOption(from, body);
-  
+            mediaFile.includes(body) ? () => this.sendMedia(from, body) :
+              this.appointmentState[from] ? () => this.handleAppointmentFlow(from, body) :
+                this.assistandState[from] ? () => this.handleAssistanFlow(from, body) :
+                  () => this.handleMenuOption(from, body);
+
         await action();
         await whatsappService.markAsRead(id);
       },
@@ -34,7 +36,7 @@ class MessageHandler {
         await whatsappService.markAsRead(id);
       }
     };
-  
+
     if (handlers[type]) await handlers[type]();
   }
 
@@ -223,7 +225,6 @@ Por favor, elige una de las siguientes opciones:`;
   async handleAssistanFlow(to, message) {
     const state = this.assistandState[to];
     let response;
-
     const menuMessage = '¿La respuesta fue de tu ayuda?'
     const buttons = [
       { type: 'reply', reply: { id: 'option_4', title: 'Si, gracias' } },
@@ -232,12 +233,19 @@ Por favor, elige una de las siguientes opciones:`;
     ];
 
     if (state.step === 'question') {
-      response = state.type === 'openIA' ? await openAIService(message) : await geminiService(message);
+      response = state.type === 'openIA' ? await openAIService(message) : await geminiService(to, message);
     }
 
-    delete this.assistandState[to];
-    await whatsappService.sendMessage(to, response);
-    await whatsappService.sendInteractiveButtons(to, menuMessage, buttons);
+    console.log('response', response);
+    if (response.trim().toLowerCase() === 'ya') { 
+      console.log('termino');
+      delete this.assistandState[to];
+      await whatsappService.sendInteractiveButtons(to, menuMessage, buttons);
+
+    } else {
+      console.log('conversacion');
+      await whatsappService.sendMessage(to, response); 
+    }
   }
 
   async sendContact(to) {
