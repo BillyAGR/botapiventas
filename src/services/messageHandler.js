@@ -17,8 +17,6 @@ class MessageHandler {
     const option = message?.interactive?.button_reply?.title?.toLowerCase()?.trim();
     const mediaFile = ['audio', 'video', 'imagen', 'documento'];
 
-    // console.log('asistente', this.assistandState[from]);
-
     const handlers = {
       text: async () => {
         const action =
@@ -235,15 +233,11 @@ Por favor, elige una de las siguientes opciones:`;
     if (state.step === 'question') {
       response = state.type === 'openIA' ? await openAIService(message) : await geminiService(to, message);
     }
-
-    console.log('response', response);
     if (response.trim().toLowerCase() === 'ya') { 
-      console.log('termino');
       delete this.assistandState[to];
       await whatsappService.sendInteractiveButtons(to, menuMessage, buttons);
 
     } else {
-      console.log('conversacion');
       await whatsappService.sendMessage(to, response); 
     }
   }
@@ -303,7 +297,7 @@ Por favor, elige una de las siguientes opciones:`;
       latitude: 6.20716,
       longitude: -75.574607,
       name: 'SAO',
-      address: 'Cl. 6 Sur #43a 96 Of 405, El Poblado, Medellín, El Poblado, Medellín, Antioquia'
+      address: 'Cl. 6 Sur #43a 68 Of 405, El Poblado, Medellín, El Poblado, Medellín, Antioquia'
     }
 
     await whatsappService.sendLocationMessage(to, location);
